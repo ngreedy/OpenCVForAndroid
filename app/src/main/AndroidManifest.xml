@@ -9,7 +9,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".ObjectDetectingActivity"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -18,10 +18,10 @@
             </intent-filter>
         </activity>
         <!-- 目标检测Activity -->
-        <activity
-            android:name=".ObjectDetectingActivity"
-            android:screenOrientation="landscape"
-            android:theme="@style/FullscreenTheme" />
+        <!--<activity-->
+            <!--android:name=".ObjectDetectingActivity"-->
+            <!--android:screenOrientation="landscape"-->
+            <!--android:theme="@style/FullscreenTheme" />-->
         <!-- 目标追踪Activity -->
         <activity
             android:name=".ObjectTrackingActivity"

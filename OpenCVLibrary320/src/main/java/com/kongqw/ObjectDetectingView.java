@@ -1,6 +1,7 @@
 package com.kongqw;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -8,6 +9,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.FaceUtil;
 
 import java.util.ArrayList;
 
@@ -29,6 +31,7 @@ public class ObjectDetectingView extends BaseCameraView {
         mObject = new MatOfRect();
 
         mObjectDetects = new ArrayList<>();
+
     }
 
     @Override
@@ -39,6 +42,10 @@ public class ObjectDetectingView extends BaseCameraView {
     public ObjectDetectingView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
+
+
+    private Mat face1;
+    private boolean first = true;
 
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
@@ -51,9 +58,25 @@ public class ObjectDetectingView extends BaseCameraView {
             Rect[] object = detector.detectObject(mGray, mObject);
             for (Rect rect : object) {
                 Imgproc.rectangle(mRgba, rect.tl(), rect.br(), detector.getRectColor(), 3);
+                if (first) {
+                    face1 = mRgba;
+                    FaceUtil.saveImage(getContext(), mRgba, rect, "detect_face");
+                    first = false;
+                } else {
+                    FaceUtil.saveImage(getContext(), mRgba, rect, "detect_face_1");
+                }
+            }
+
+            if (onFaceDetectedListener != null && object.length != 0) {
+                final Bitmap bitmap = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888);
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onFaceDetectedListener.onFaceDetected(bitmap,mRgba);
+                    }
+                });
             }
         }
-
         return mRgba;
     }
 
@@ -79,4 +102,17 @@ public class ObjectDetectingView extends BaseCameraView {
         }
     }
 
+    private onFaceDetectedListener onFaceDetectedListener;
+
+    public interface onFaceDetectedListener {
+        void onFaceDetected(Bitmap bitmap, Mat mRgba);
+    }
+
+    public void setOnFaceDetectedListener(onFaceDetectedListener onFaceDetectedListener) {
+        this.onFaceDetectedListener = onFaceDetectedListener;
+    }
+
+    public void removeFaceDetectListener() {
+        onFaceDetectedListener = null;
+    }
 }

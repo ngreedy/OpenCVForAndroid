@@ -1,9 +1,11 @@
 package kong.qingwei.opencv320;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.Toast;
 
@@ -11,9 +13,11 @@ import com.kongqw.ObjectDetectingView;
 import com.kongqw.ObjectDetector;
 import com.kongqw.listener.OnOpenCVLoadListener;
 
+import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
+import org.opencv.utils.FaceUtil;
 
-public class ObjectDetectingActivity extends BaseActivity implements CompoundButton.OnCheckedChangeListener {
+public class ObjectDetectingActivity extends BaseActivity implements CompoundButton.OnCheckedChangeListener, ObjectDetectingView.onFaceDetectedListener {
 
     private ObjectDetectingView objectDetectingView;
     private ObjectDetector mFaceDetector;
@@ -22,6 +26,10 @@ public class ObjectDetectingActivity extends BaseActivity implements CompoundBut
     private ObjectDetector mLowerBodyDetector;
     private ObjectDetector mFullBodyDetector;
     private ObjectDetector mSmileDetector;
+
+    private ImageView faceImage;
+    private ImageView faceImage1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +43,8 @@ public class ObjectDetectingActivity extends BaseActivity implements CompoundBut
         ((RadioButton) findViewById(R.id.rb_lower_body)).setOnCheckedChangeListener(this);
         ((RadioButton) findViewById(R.id.rb_full_body)).setOnCheckedChangeListener(this);
         ((RadioButton) findViewById(R.id.rb_smile)).setOnCheckedChangeListener(this);
+        faceImage = (ImageView) findViewById(R.id.face_preview);
+        faceImage1 = (ImageView) findViewById(R.id.face_preview_1);
 
         objectDetectingView = (ObjectDetectingView) findViewById(R.id.photograph_view);
 
@@ -48,7 +58,8 @@ public class ObjectDetectingActivity extends BaseActivity implements CompoundBut
                 mLowerBodyDetector = new ObjectDetector(getApplicationContext(), R.raw.haarcascade_lowerbody, 3, 0.3F, 0.4F, new Scalar(255, 255, 0, 255));
                 mFullBodyDetector = new ObjectDetector(getApplicationContext(), R.raw.haarcascade_fullbody, 3, 0.3F, 0.5F, new Scalar(255, 0, 255, 255));
                 mSmileDetector = new ObjectDetector(getApplicationContext(), R.raw.haarcascade_smile, 10, 0.2F, 0.2F, new Scalar(0, 255, 255, 255));
-                findViewById(R.id.radio_group).setVisibility(View.VISIBLE);
+//                findViewById(R.id.radio_group).setVisibility(View.VISIBLE);
+                objectDetectingView.addDetector(mFaceDetector);
             }
 
             @Override
@@ -63,7 +74,36 @@ public class ObjectDetectingActivity extends BaseActivity implements CompoundBut
         });
 
         objectDetectingView.loadOpenCV(getApplicationContext());
+
+        objectDetectingView.setOnFaceDetectedListener(this);
     }
+
+    public void checkAgain(View view) {
+        objectDetectingView.setOnFaceDetectedListener(this);
+    }
+
+    private Bitmap firstBitmap;
+    private Mat firstMat;
+
+    @Override
+    public void onFaceDetected(Bitmap bitmap, Mat mat) {
+        if (firstBitmap == null) {
+            firstBitmap = bitmap;
+            firstMat = mat;
+            if (bitmap != null) {
+                faceImage.setImageBitmap(FaceUtil.getImage(this, "detect_face"));
+                objectDetectingView.removeFaceDetectListener();
+            }
+        } else {
+            Bitmap face1 = FaceUtil.getImage(this, "detect_face_1");
+            faceImage1.setImageBitmap(face1);
+            objectDetectingView.removeFaceDetectListener();
+            FaceUtil.compare(firstMat, mat, firstMat);
+        }
+
+//        faceImage.setImageBitmap(bitmap);
+    }
+
 
     /**
      * 切换摄像头
@@ -73,6 +113,7 @@ public class ObjectDetectingActivity extends BaseActivity implements CompoundBut
     public void swapCamera(View view) {
         objectDetectingView.swapCamera();
     }
+
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -128,5 +169,7 @@ public class ObjectDetectingActivity extends BaseActivity implements CompoundBut
             default:
                 break;
         }
+
     }
+
 }
